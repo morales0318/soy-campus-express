@@ -1,4 +1,4 @@
-import { ShoppingCart, LogOut, UserCircle2, ClipboardList } from "lucide-react";
+import { ShoppingCart, LogOut, UserCircle2, ClipboardList, Shield } from "lucide-react";
 import { User } from "@/types";
 import { StoreButton } from "@/components/ui/store-button";
 
@@ -8,9 +8,10 @@ interface NavbarProps {
   cartCount: number;
   onCartClick: () => void;
   onShowOrders: () => void;
+  onShowAdmin: () => void;
 }
 
-export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders }: NavbarProps) {
+export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, onShowAdmin }: NavbarProps) {
   return (
     <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border shadow-soft">
       <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">

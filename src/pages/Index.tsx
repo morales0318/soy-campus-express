@@ -10,12 +10,13 @@ import { AuthView } from "@/components/auth/AuthView";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { CartSheet } from "@/components/shop/CartSheet";
 import { OrdersView } from "@/components/shop/OrdersView";
+import { AdminView } from "@/components/admin/AdminView";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [view, setView] = useState<"shop" | "orders">("shop");
+  const [view, setView] = useState<"shop" | "orders" | "admin">("shop");
   const [banner, setBanner] = useState("");
 
   useEffect(() => {
@@ -76,7 +77,7 @@ const Index = () => {
         facebook: user.facebook, 
         username: user.username 
       },
-      status: "pending",
+      status: "pending" as const,
     };
     saveOrder(user.username, order);
     setCart([]);
@@ -88,7 +89,7 @@ const Index = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-hero">
-        <Navbar user={null} onLogout={handleLogout} cartCount={0} onCartClick={() => {}} onShowOrders={() => {}} />
+        <Navbar user={null} onLogout={handleLogout} cartCount={0} onCartClick={() => {}} onShowOrders={() => {}} onShowAdmin={() => setView("admin")} />
         <AuthView onAuthed={(u) => setUser(u)} />
         <Footer />
       </div>
@@ -105,6 +106,7 @@ const Index = () => {
         cartCount={cartCount}
         onCartClick={() => setCartOpen(true)}
         onShowOrders={() => setView("orders")}
+        onShowAdmin={() => setView("admin")}
       />
 
       {banner && (
@@ -165,6 +167,10 @@ const Index = () => {
 
       {view === "orders" && (
         <OrdersView user={user} onBack={() => setView("shop")} />
+      )}
+
+      {view === "admin" && (
+        <AdminView onBack={() => setView("shop")} />
       )}
 
       <Footer />

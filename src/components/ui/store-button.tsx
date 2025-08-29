@@ -5,7 +5,7 @@ interface StoreButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   icon?: LucideIcon;
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "hero";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "hero" | "success" | "outline";
   type?: "button" | "submit";
   disabled?: boolean;
   className?: string;
@@ -25,7 +25,9 @@ export function StoreButton({
     secondary: "bg-secondary text-secondary-foreground border border-border hover:bg-accent hover:shadow-soft",
     ghost: "text-foreground hover:bg-accent hover:text-accent-foreground",
     danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-soft",
-    hero: "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-card hover:shadow-glow hover:from-primary-glow hover:to-primary transform hover:scale-105"
+    hero: "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-card hover:shadow-glow hover:from-primary-glow hover:to-primary transform hover:scale-105",
+    success: "bg-green-600 text-white hover:bg-green-700 hover:shadow-soft",
+    outline: "border border-border bg-background hover:bg-accent hover:text-accent-foreground hover:shadow-soft"
   };
 
   return (

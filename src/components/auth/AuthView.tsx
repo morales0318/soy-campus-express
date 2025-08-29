@@ -17,7 +17,7 @@ export function AuthView({ onAuthed }: AuthViewProps) {
   const [password, setPassword] = useState("");
   const [contact, setContact] = useState("");
   const [facebook, setFacebook] = useState("");
-  const [campus, setCampus] = useState("Main Gate");
+  const [campus, setCampus] = useState("CAS Department");
   const [error, setError] = useState("");
 
   function reset() {

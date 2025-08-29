@@ -31,5 +31,5 @@ export interface Order {
     facebook: string;
     username: string;
   };
-  status: string;
+  status: "pending" | "delivered";
 }

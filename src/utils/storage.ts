@@ -3,6 +3,7 @@ import { User, Order } from '../types';
 const LS_USERS = "soy_users";
 const LS_AUTH = "soy_auth_user";
 const LS_ORDERS = (username: string) => `soy_orders_${username}`;
+const LS_ALL_ORDERS = "soy_all_orders";
 
 export function getUsers(): User[] {
   try { 
@@ -37,6 +38,12 @@ export function saveOrder(username: string, order: Order): void {
   const existing = JSON.parse(localStorage.getItem(key) || "[]");
   existing.push(order);
   localStorage.setItem(key, JSON.stringify(existing));
+  
+  // Also save to all orders for admin view
+  const allOrders = getAllOrders();
+  const orderWithId = { ...order, id: Date.now().toString(), username };
+  allOrders.push(orderWithId);
+  localStorage.setItem(LS_ALL_ORDERS, JSON.stringify(allOrders));
 }
 
 export function getOrders(username: string): Order[] {
@@ -45,5 +52,32 @@ export function getOrders(username: string): Order[] {
     return JSON.parse(localStorage.getItem(key) || "[]"); 
   } catch { 
     return []; 
+  }
+}
+
+export function getAllOrders(): any[] {
+  try { 
+    return JSON.parse(localStorage.getItem(LS_ALL_ORDERS) || "[]"); 
+  } catch { 
+    return []; 
+  }
+}
+
+export function updateOrderStatus(orderId: string, status: "pending" | "delivered"): void {
+  const allOrders = getAllOrders();
+  const updatedOrders = allOrders.map(order => 
+    order.id === orderId ? { ...order, status } : order
+  );
+  localStorage.setItem(LS_ALL_ORDERS, JSON.stringify(updatedOrders));
+  
+  // Also update in user's orders
+  const order = allOrders.find(o => o.id === orderId);
+  if (order) {
+    const userOrders = getOrders(order.username);
+    const updatedUserOrders = userOrders.map(o => 
+      o.createdAt === order.createdAt ? { ...o, status } : o
+    );
+    const key = LS_ORDERS(order.username);
+    localStorage.setItem(key, JSON.stringify(updatedUserOrders));
   }
 }

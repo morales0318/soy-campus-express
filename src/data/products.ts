@@ -11,11 +11,9 @@ export const PRODUCTS: Product[] = [
 ];
 
 export const CAMPUS_OPTIONS = [
-  "Main Gate", 
-  "Library", 
-  "Cafeteria", 
-  "Dorms", 
-  "Gym", 
-  "Science Building", 
-  "Admin Office"
+  "CAS Department", 
+  "CBA Department", 
+  "CET Department", 
+  "EDUC Department", 
+  "CCMADI Department"
 ];
