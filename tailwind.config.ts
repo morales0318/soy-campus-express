@@ -26,11 +26,22 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					light: 'hsl(var(--primary-light))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
+				},
+				flavor: {
+					classic: 'hsl(var(--flavor-classic))',
+					mango: 'hsl(var(--flavor-mango))',
+					chocolate: 'hsl(var(--flavor-chocolate))',
+					strawberry: 'hsl(var(--flavor-strawberry))',
+					ube: 'hsl(var(--flavor-ube))',
+					coffee: 'hsl(var(--flavor-coffee))',
+					banana: 'hsl(var(--flavor-banana))'
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
