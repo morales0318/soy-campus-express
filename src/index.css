@@ -153,4 +153,9 @@
   .bg-gradient-card {
     background: var(--gradient-card);
   }
+  
+  /* Hide Lovable badge */
+  #lovable-badge {
+    display: none !important;
+  }
 }
