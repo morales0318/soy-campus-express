@@ -55,8 +55,12 @@ export function OrdersView({ user, onBack }: OrdersViewProps) {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-brand-gradient">{currency.format(order.total)}</p>
-                  <span className="inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                    Pending
+                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium ${
+                    order.status === "delivered" 
+                      ? "bg-green-100 text-green-700 border border-green-200"
+                      : "bg-amber-100 text-amber-700 border border-amber-200"
+                  }`}>
+                    {order.status === "delivered" ? "✅ Delivered" : "🕐 Pending"}
                   </span>
                 </div>
               </div>

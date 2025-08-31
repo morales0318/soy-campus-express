@@ -18,6 +18,16 @@ export function saveUsers(users: User[]): void {
 }
 
 export function findUser(username: string): User | undefined { 
+  // Handle admin account
+  if (username.toLowerCase() === 'technoadmin') {
+    return {
+      username: 'TechnoAdmin',
+      password: 'AdminAccess12345',
+      contact: 'admin@soyfresh.com',
+      facebook: '',
+      campus: 'Admin'
+    };
+  }
   return getUsers().find(u => u.username.toLowerCase() === username.toLowerCase()); 
 }
 
@@ -80,4 +90,26 @@ export function updateOrderStatus(orderId: string, status: "pending" | "delivere
     const key = LS_ORDERS(order.username);
     localStorage.setItem(key, JSON.stringify(updatedUserOrders));
   }
+}
+
+// Product availability management
+const LS_PRODUCT_AVAILABILITY = "soy_product_availability";
+
+export function getProductAvailability(): Record<number, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(LS_PRODUCT_AVAILABILITY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function setProductAvailability(productId: number, available: boolean): void {
+  const availability = getProductAvailability();
+  availability[productId] = available;
+  localStorage.setItem(LS_PRODUCT_AVAILABILITY, JSON.stringify(availability));
+}
+
+export function isProductAvailable(productId: number): boolean {
+  const availability = getProductAvailability();
+  return availability[productId] !== false; // Default to true if not set
 }

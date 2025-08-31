@@ -30,17 +30,26 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
         
         {user && (
           <div className="flex items-center gap-3">
-            <StoreButton variant="ghost" onClick={onShowOrders} icon={ClipboardList}>
-              Orders
-            </StoreButton>
-            <StoreButton variant="secondary" onClick={onCartClick} icon={ShoppingCart}>
-              Cart
-              {cartCount > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs w-6 h-6 font-bold shadow-soft">
-                  {cartCount}
-                </span>
-              )}
-            </StoreButton>
+            {user.username !== 'TechnoAdmin' && (
+              <>
+                <StoreButton variant="ghost" onClick={onShowOrders} icon={ClipboardList}>
+                  Orders
+                </StoreButton>
+                <StoreButton variant="secondary" onClick={onCartClick} icon={ShoppingCart}>
+                  Cart
+                  {cartCount > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs w-6 h-6 font-bold shadow-soft">
+                      {cartCount}
+                    </span>
+                  )}
+                </StoreButton>
+              </>
+            )}
+            {user.username === 'TechnoAdmin' && (
+              <StoreButton variant="ghost" onClick={onShowAdmin} icon={Shield}>
+                Dashboard
+              </StoreButton>
+            )}
             <div className="flex items-center gap-3 pl-4 ml-3 border-l border-border">
               <UserCircle2 className="h-6 w-6 text-primary" />
               <span className="text-sm text-foreground font-medium">{user.username}</span>

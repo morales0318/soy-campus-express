@@ -28,6 +28,14 @@ const Index = () => {
   }, []);
 
   function handleAddToCart(product: Product) {
+    const { isProductAvailable } = require("@/utils/storage");
+    
+    if (!isProductAvailable(product.id)) {
+      setBanner("Sorry, this product is currently unavailable.");
+      setTimeout(() => setBanner(""), 2000);
+      return;
+    }
+    
     setCart((prev) => {
       const existing = prev.find((p) => p.id === product.id);
       if (existing) {
@@ -89,11 +97,16 @@ const Index = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-hero">
-        <Navbar user={null} onLogout={handleLogout} cartCount={0} onCartClick={() => {}} onShowOrders={() => {}} onShowAdmin={() => setView("admin")} />
+        <Navbar user={null} onLogout={handleLogout} cartCount={0} onCartClick={() => {}} onShowOrders={() => {}} onShowAdmin={() => {}} />
         <AuthView onAuthed={(u) => setUser(u)} />
         <Footer />
       </div>
     );
+  }
+
+  // Redirect regular users away from admin if they somehow get there
+  if (view === "admin" && user.username !== 'TechnoAdmin') {
+    setView("shop");
   }
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -117,7 +130,7 @@ const Index = () => {
         </div>
       )}
 
-      {view === "shop" && (
+      {view === "shop" && user.username !== 'TechnoAdmin' && (
         <main className="mx-auto max-w-5xl px-4 py-8">
           <header className="mb-10 text-center lg:text-left lg:flex lg:items-end lg:justify-between">
             <div className="mb-6 lg:mb-0">
@@ -165,12 +178,12 @@ const Index = () => {
         </main>
       )}
 
-      {view === "orders" && (
-        <OrdersView user={user} onBack={() => setView("shop")} />
+      {user.username === 'TechnoAdmin' && (
+        <AdminView onBack={handleLogout} />
       )}
 
-      {view === "admin" && (
-        <AdminView onBack={() => setView("shop")} />
+      {view === "orders" && user.username !== 'TechnoAdmin' && (
+        <OrdersView user={user} onBack={() => setView("shop")} />
       )}
 
       <Footer />
