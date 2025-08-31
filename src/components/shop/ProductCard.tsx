@@ -25,7 +25,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
 
   return (
     <div className={cn(
-      "group rounded-3xl border-2 p-6 shadow-card hover:shadow-glow transition-all duration-300 transform hover:scale-105 relative overflow-hidden",
+      "group rounded-3xl border-2 p-4 sm:p-6 shadow-card hover:shadow-glow transition-all duration-300 transform hover:scale-105 active:scale-95 relative overflow-hidden touch-manipulation",
       flavorClasses[product.flavorKey as keyof typeof flavorClasses],
       !available && "opacity-60 grayscale"
     )}> 
@@ -33,15 +33,15 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
       
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
-          <div className="text-5xl transform group-hover:scale-110 transition-transform duration-300" aria-hidden>
+          <div className="text-4xl sm:text-5xl transform group-hover:scale-110 transition-transform duration-300" aria-hidden>
             {product.emoji}
           </div>
-          <span className="text-sm font-bold rounded-2xl bg-background/90 text-foreground px-3 py-2 border border-border shadow-soft">
+          <span className="text-xs sm:text-sm font-bold rounded-2xl bg-background/90 text-foreground px-2 sm:px-3 py-1 sm:py-2 border border-border shadow-soft">
             {currency.format(product.price)}
           </span>
         </div>
         
-        <h3 className="text-xl font-bold text-foreground mb-4 group-hover:text-brand-gradient transition-colors">
+        <h3 className="text-lg sm:text-xl font-bold text-foreground mb-4 group-hover:text-brand-gradient transition-colors">
           {product.name}
         </h3>
         
@@ -51,7 +51,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
         
         <StoreButton 
           onClick={() => onAdd(product)} 
-          className="w-full group-hover:from-primary-glow group-hover:to-primary" 
+          className="w-full group-hover:from-primary-glow group-hover:to-primary text-sm sm:text-base" 
           icon={ShoppingCart}
           variant="primary"
           disabled={!available}

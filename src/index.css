@@ -158,4 +158,42 @@
   #lovable-badge {
     display: none !important;
   }
+  
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .touch-manipulation {
+      touch-action: manipulation;
+    }
+    
+    /* Better tap targets for mobile */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Prevent zoom on input focus */
+    input[type="text"], 
+    input[type="email"], 
+    input[type="password"], 
+    textarea, 
+    select {
+      font-size: 16px !important;
+    }
+    
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent text selection on touch */
+    .touch-callout-none {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+  }
 }

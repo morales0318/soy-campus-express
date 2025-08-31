@@ -123,24 +123,24 @@ const Index = () => {
       />
 
       {banner && (
-        <div className="mx-auto max-w-5xl px-4 pt-6">
-          <div className="rounded-2xl bg-primary/10 text-primary border border-primary/20 px-6 py-4 text-sm font-medium shadow-soft animate-in slide-in-from-top-2 duration-300">
+        <div className="mx-auto max-w-5xl px-3 sm:px-4 pt-4 sm:pt-6">
+          <div className="rounded-2xl bg-primary/10 text-primary border border-primary/20 px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium shadow-soft animate-in slide-in-from-top-2 duration-300">
             {banner}
           </div>
         </div>
       )}
 
       {view === "shop" && user.username !== 'TechnoAdmin' && (
-        <main className="mx-auto max-w-5xl px-4 py-8">
-          <header className="mb-10 text-center lg:text-left lg:flex lg:items-end lg:justify-between">
+        <main className="mx-auto max-w-5xl px-3 sm:px-4 py-6 sm:py-8">
+          <header className="mb-8 sm:mb-10 text-center lg:text-left lg:flex lg:items-end lg:justify-between">
             <div className="mb-6 lg:mb-0">
-              <h2 className="text-4xl font-bold text-brand-gradient mb-3 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold text-brand-gradient mb-3 tracking-tight">
                 Choose Your Flavor
               </h2>
-              <p className="text-muted-foreground text-lg mb-4">
+              <p className="text-muted-foreground text-base sm:text-lg mb-4">
                 Classic soy milk for {currency.format(20)}. Premium flavors for {currency.format(25)}.
               </p>
-              <div className="flex items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />
                   <span>{user.campus}</span>
@@ -166,7 +166,7 @@ const Index = () => {
             </div>
           </header>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {PRODUCTS.map((product) => (
               <ProductCard 
                 key={product.id} 
