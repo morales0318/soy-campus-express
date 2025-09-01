@@ -1,36 +1,83 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin, Phone, Facebook } from "lucide-react";
-import { User, CartItem, Product } from "@/types";
-import { PRODUCTS } from "@/data/products";
-import { getAuthedUser, findUser, logout, saveOrder } from "@/utils/storage";
+import { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser, signOut, AuthUser } from "@/lib/auth";
+import { getProducts, updateProductAvailability, Product } from "@/lib/products";
+import { createOrder, getUserOrders, getAllOrders, updateOrderStatus, Order, OrderItem } from "@/lib/orders";
 import { currency } from "@/utils/currency";
+import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { AuthView } from "@/components/auth/AuthView";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { CartSheet } from "@/components/shop/CartSheet";
 import { OrdersView } from "@/components/shop/OrdersView";
 import { AdminView } from "@/components/admin/AdminView";
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+}
+
 const Index = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [view, setView] = useState<"shop" | "orders" | "admin">("shop");
   const [banner, setBanner] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const authed = getAuthedUser();
-    if (authed) {
-      const u = findUser(authed);
-      if (u) setUser(u);
-    }
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        if (session?.user) {
+          const authUser = await getCurrentUser();
+          setUser(authUser);
+        } else {
+          setUser(null);
+          navigate('/auth');
+        }
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      if (session?.user) {
+        const authUser = await getCurrentUser();
+        setUser(authUser);
+      } else {
+        navigate('/auth');
+      }
+      setLoading(false);
+    };
+
+    checkSession();
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const productList = await getProducts();
+      setProducts(productList);
+    };
+    loadProducts();
   }, []);
 
   function handleAddToCart(product: Product) {
-    const { isProductAvailable } = require("@/utils/storage");
-    
-    if (!isProductAvailable(product.id)) {
+    if (!product.available) {
       setBanner("Sorry, this product is currently unavailable.");
       setTimeout(() => setBanner(""), 2000);
       return;
@@ -54,58 +101,69 @@ const Index = () => {
     setTimeout(() => setBanner(""), 2000);
   }
 
-  function handleRemoveFromCart(id: number) { 
+  function handleRemoveFromCart(id: string) { 
     setCart((prev) => prev.filter((p) => p.id !== id)); 
   }
 
-  function handleQtyChange(id: number, qty: number) {
+  function handleQtyChange(id: string, qty: number) {
     if (!qty || qty < 1) qty = 1;
     setCart((prev) => prev.map((p) => 
       p.id === id ? { ...p, qty } : p
     ));
   }
 
-  function handleLogout() { 
-    logout(); 
+  async function handleLogout() { 
+    await signOut();
     setUser(null); 
     setCart([]); 
-    setView("shop"); 
+    setView("shop");
+    navigate('/auth');
   }
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (!user) return;
-    const total = cart.reduce((s, it) => s + it.price * it.qty, 0);
-    const order = {
-      items: cart,
-      total,
-      createdAt: new Date().toISOString(),
-      delivery: { 
-        campus: user.campus, 
-        contact: user.contact, 
-        facebook: user.facebook, 
-        username: user.username 
-      },
-      status: "pending" as const,
-    };
-    saveOrder(user.username, order);
-    setCart([]);
-    setCartOpen(false);
-    setBanner("Order placed successfully! 🎉 Check your orders to track delivery.");
-    setTimeout(() => setBanner(""), 3000);
+    
+    try {
+      const orderItems: OrderItem[] = cart.map(item => ({
+        productId: item.id,
+        productName: item.name,
+        quantity: item.qty,
+        price: item.price
+      }));
+
+      await createOrder(orderItems);
+      setCart([]);
+      setCartOpen(false);
+      toast({
+        title: "Order Placed Successfully! 🎉",
+        description: "Check your orders to track delivery.",
+      });
+    } catch (error) {
+      toast({
+        title: "Order Failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive",
+      });
+    }
   }
 
-  if (!user) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero">
-        <Navbar user={null} onLogout={handleLogout} cartCount={0} onCartClick={() => {}} onShowOrders={() => {}} onShowAdmin={() => {}} />
-        <AuthView onAuthed={(u) => setUser(u)} />
-        <Footer />
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
 
+  if (!user) {
+    return null; // Auth redirect will handle this
+  }
+
   // Redirect regular users away from admin if they somehow get there
-  if (view === "admin" && user.username !== 'TechnoAdmin') {
+  if (view === "admin" && !user.isAdmin) {
     setView("shop");
   }
 
@@ -130,7 +188,7 @@ const Index = () => {
         </div>
       )}
 
-      {view === "shop" && user.username !== 'TechnoAdmin' && (
+      {view === "shop" && !user.isAdmin && (
         <main className="mx-auto max-w-5xl px-3 sm:px-4 py-6 sm:py-8">
           <header className="mb-8 sm:mb-10 text-center lg:text-left lg:flex lg:items-end lg:justify-between">
             <div className="mb-6 lg:mb-0">
@@ -141,50 +199,54 @@ const Index = () => {
                 Classic soy milk for {currency.format(20)}. Premium flavors for {currency.format(25)}.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span>{user.campus}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  <span>{user.contact}</span>
-                </div>
-                {user.facebook && (
-                  <div className="flex items-center gap-2">
-                    <Facebook className="h-4 w-4 text-primary" />
-                    <a 
-                      className="underline hover:text-primary transition-colors" 
-                      href={user.facebook} 
-                      target="_blank" 
-                      rel="noreferrer"
-                    >
-                      Facebook
-                    </a>
-                  </div>
-                )}
+                 {user.campus && (
+                   <div className="flex items-center gap-2">
+                     <MapPin className="h-4 w-4 text-primary" />
+                     <span>{user.campus}</span>
+                   </div>
+                 )}
+                 {user.contact && (
+                   <div className="flex items-center gap-2">
+                     <Phone className="h-4 w-4 text-primary" />
+                     <span>{user.contact}</span>
+                   </div>
+                 )}
+                 {user.facebook && (
+                   <div className="flex items-center gap-2">
+                     <Facebook className="h-4 w-4 text-primary" />
+                     <a 
+                       className="underline hover:text-primary transition-colors" 
+                       href={user.facebook} 
+                       target="_blank" 
+                       rel="noreferrer"
+                     >
+                       Facebook
+                     </a>
+                   </div>
+                 )}
               </div>
             </div>
           </header>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {PRODUCTS.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
-                onAdd={handleAddToCart} 
-              />
-            ))}
-          </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+             {products.map((product) => (
+               <ProductCard 
+                 key={product.id} 
+                 product={product} 
+                 onAdd={handleAddToCart} 
+               />
+             ))}
+           </div>
         </main>
       )}
 
-      {user.username === 'TechnoAdmin' && (
-        <AdminView onBack={handleLogout} />
-      )}
+       {user.isAdmin && (
+         <AdminView onBack={handleLogout} />
+       )}
 
-      {view === "orders" && user.username !== 'TechnoAdmin' && (
-        <OrdersView user={user} onBack={() => setView("shop")} />
-      )}
+       {view === "orders" && !user.isAdmin && (
+         <OrdersView user={user} onBack={() => setView("shop")} />
+       )}
 
       <Footer />
 

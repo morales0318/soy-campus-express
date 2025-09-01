@@ -1,16 +1,41 @@
+import { useEffect, useState } from "react";
 import { ClipboardList, ArrowLeft, Package } from "lucide-react";
-import { User } from "@/types";
-import { getOrders } from "@/utils/storage";
+import { AuthUser } from "@/lib/auth";
+import { getUserOrders, Order } from "@/lib/orders";
 import { currency } from "@/utils/currency";
 import { StoreButton } from "@/components/ui/store-button";
 
 interface OrdersViewProps {
-  user: User;
+  user: AuthUser;
   onBack: () => void;
 }
 
 export function OrdersView({ user, onBack }: OrdersViewProps) {
-  const orders = getOrders(user.username);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const userOrders = await getUserOrders();
+        setOrders(userOrders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadOrders();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8 text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Loading orders...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -35,12 +60,12 @@ export function OrdersView({ user, onBack }: OrdersViewProps) {
         </div>
       ) : (
         <div className="grid gap-6">
-          {orders.slice().reverse().map((order, idx) => (
-            <div key={idx} className="rounded-3xl border border-border bg-gradient-card shadow-card p-6 hover:shadow-glow transition-shadow duration-300">
+          {orders.map((order) => (
+            <div key={order.id} className="rounded-3xl border border-border bg-gradient-card shadow-card p-6 hover:shadow-glow transition-shadow duration-300">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    {new Date(order.createdAt).toLocaleString('en-PH', {
+                    {new Date(order.created_at).toLocaleString('en-PH', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -49,35 +74,18 @@ export function OrdersView({ user, onBack }: OrdersViewProps) {
                     })}
                   </p>
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p><span className="font-medium">Delivery:</span> {order.delivery.campus}</p>
-                    <p><span className="font-medium">Contact:</span> {order.delivery.contact}</p>
+                    <p><span className="font-medium">Product:</span> {order.product_name}</p>
+                    <p><span className="font-medium">Quantity:</span> {order.quantity}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-brand-gradient">{currency.format(order.total)}</p>
-                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium ${
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                     order.status === "delivered" 
                       ? "bg-green-100 text-green-700 border border-green-200"
                       : "bg-amber-100 text-amber-700 border border-amber-200"
                   }`}>
                     {order.status === "delivered" ? "✅ Delivered" : "🕐 Pending"}
                   </span>
-                </div>
-              </div>
-              
-              <div className="border-t border-border pt-4">
-                <h4 className="font-semibold text-foreground mb-3">Items Ordered:</h4>
-                <div className="grid gap-2">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between py-2 px-3 rounded-xl bg-background/50">
-                      <span className="text-sm text-foreground">
-                        {item.name} × {item.qty}
-                      </span>
-                      <span className="text-sm font-medium text-primary">
-                        {currency.format(item.price * item.qty)}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

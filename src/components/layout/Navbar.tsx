@@ -1,9 +1,9 @@
 import { ShoppingCart, LogOut, UserCircle2, ClipboardList, Shield } from "lucide-react";
-import { User } from "@/types";
+import { AuthUser } from "@/lib/auth";
 import { StoreButton } from "@/components/ui/store-button";
 
 interface NavbarProps {
-  user: User | null;
+  user: AuthUser | null;
   onLogout: () => void;
   cartCount: number;
   onCartClick: () => void;
@@ -30,7 +30,7 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
         
         {user && (
           <div className="flex items-center gap-1 sm:gap-3">
-            {user.username !== 'TechnoAdmin' && (
+            {!user.isAdmin && (
               <>
                 <StoreButton 
                   variant="ghost" 
@@ -84,7 +84,7 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
               </>
             )}
             
-            {user.username === 'TechnoAdmin' && (
+            {user.isAdmin && (
               <>
                 <StoreButton 
                   variant="ghost" 

@@ -1,14 +1,20 @@
 import { useMemo } from "react";
 import { Trash2, CheckCircle2, X } from "lucide-react";
-import { CartItem } from "@/types";
 import { currency } from "@/utils/currency";
 import { StoreButton } from "@/components/ui/store-button";
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+}
 
 interface CartSheetProps {
   items: CartItem[];
   onClose: () => void;
-  onRemove: (id: number) => void;
-  onQtyChange: (id: number, qty: number) => void;
+  onRemove: (id: string) => void;
+  onQtyChange: (id: string, qty: number) => void;
   onCheckout: () => void;
 }
 

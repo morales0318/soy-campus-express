@@ -1,9 +1,10 @@
+import { useEffect, useState } from "react";
 import { CheckCircle2, Package, Clock, ArrowLeft, Settings, Eye, EyeOff } from "lucide-react";
-import { getAllOrders, updateOrderStatus, getProductAvailability, setProductAvailability } from "@/utils/storage";
-import { PRODUCTS } from "@/data/products";
+import { getAllOrders, updateOrderStatus, Order } from "@/lib/orders";
+import { getProducts, updateProductAvailability, Product } from "@/lib/products";
 import { currency } from "@/utils/currency";
 import { StoreButton } from "@/components/ui/store-button";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminViewProps {
   onBack: () => void;
@@ -11,33 +12,106 @@ interface AdminViewProps {
 
 export function AdminView({ onBack }: AdminViewProps) {
   const [activeTab, setActiveTab] = useState<"orders" | "products">("orders");
-  const [availability, setAvailability] = useState(getProductAvailability());
-  
-  const orders = getAllOrders().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [ordersData, productsData] = await Promise.all([
+          getAllOrders(),
+          getProducts()
+        ]);
+        setOrders(ordersData);
+        setProducts(productsData);
+      } catch (error) {
+        console.error('Error loading admin data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load admin data",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [toast]);
+
   const todayOrders = orders.filter(order => {
-    const orderDate = new Date(order.createdAt).toDateString();
+    const orderDate = new Date(order.created_at).toDateString();
     const today = new Date().toDateString();
     return orderDate === today;
   });
 
-  const handleMarkDelivered = (orderId: string) => {
-    updateOrderStatus(orderId, "delivered");
-    window.location.reload(); // Simple refresh to update the view
+  const handleMarkDelivered = async (orderId: string) => {
+    try {
+      await updateOrderStatus(orderId, "delivered");
+      setOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status: "delivered" as const } : order
+      ));
+      toast({
+        title: "Order Updated",
+        description: "Order marked as delivered",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleMarkPending = (orderId: string) => {
-    updateOrderStatus(orderId, "pending");
-    window.location.reload(); // Simple refresh to update the view
+  const handleMarkPending = async (orderId: string) => {
+    try {
+      await updateOrderStatus(orderId, "pending");
+      setOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status: "pending" as const } : order
+      ));
+      toast({
+        title: "Order Updated",
+        description: "Order marked as pending",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleToggleAvailability = (productId: number) => {
-    const newAvailability = !availability[productId];
-    setProductAvailability(productId, newAvailability);
-    setAvailability(prev => ({
-      ...prev,
-      [productId]: newAvailability
-    }));
+  const handleToggleAvailability = async (productId: string, currentAvailability: boolean) => {
+    try {
+      const newAvailability = !currentAvailability;
+      await updateProductAvailability(productId, newAvailability);
+      setProducts(prev => prev.map(product => 
+        product.id === productId ? { ...product, available: newAvailability } : product
+      ));
+      toast({
+        title: "Product Updated",
+        description: `Product ${newAvailability ? 'enabled' : 'disabled'}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update product availability",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-8 text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Loading admin dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -129,7 +203,7 @@ export function AdminView({ onBack }: AdminViewProps) {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <p className="font-semibold text-foreground">@{order.username}</p>
+                        <p className="font-semibold text-foreground">Order #{order.id.slice(0, 8)}</p>
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                           order.status === "delivered" 
                             ? "bg-green-100 text-green-700 border border-green-200"
@@ -139,19 +213,18 @@ export function AdminView({ onBack }: AdminViewProps) {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">
-                        {new Date(order.createdAt).toLocaleString('en-PH', {
+                        {new Date(order.created_at).toLocaleString('en-PH', {
                           hour: '2-digit',
                           minute: '2-digit',
                           hour12: true
                         })}
                       </p>
                       <div className="text-sm text-muted-foreground space-y-1">
-                        <p><span className="font-medium">Delivery:</span> {order.delivery.campus}</p>
-                        <p><span className="font-medium">Contact:</span> {order.delivery.contact}</p>
+                        <p><span className="font-medium">Product:</span> {order.product_name}</p>
+                        <p><span className="font-medium">Quantity:</span> {order.quantity}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-brand-gradient mb-3">{currency.format(order.total)}</p>
                       {order.status === "pending" ? (
                         <StoreButton 
                           variant="success" 
@@ -171,22 +244,6 @@ export function AdminView({ onBack }: AdminViewProps) {
                       )}
                     </div>
                   </div>
-                  
-                  <div className="border-t border-border pt-4">
-                    <h4 className="font-semibold text-foreground mb-3">Items Ordered:</h4>
-                    <div className="grid gap-2">
-                      {order.items.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-xl bg-background/50">
-                          <span className="text-sm text-foreground">
-                            {item.name} × {item.qty}
-                          </span>
-                          <span className="text-sm font-medium text-primary">
-                            {currency.format(item.price * item.qty)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
@@ -198,31 +255,44 @@ export function AdminView({ onBack }: AdminViewProps) {
         <div className="space-y-6">
           <h3 className="text-xl font-semibold text-foreground">Product Availability</h3>
           <div className="grid gap-4">
-            {PRODUCTS.map((product) => (
-              <div key={product.id} className="rounded-3xl border border-border bg-gradient-card shadow-card p-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-3xl">{product.emoji}</span>
-                  <div>
-                    <h4 className="font-semibold text-foreground">{product.name}</h4>
-                    <p className="text-sm text-muted-foreground">{currency.format(product.price)}</p>
+            {products.map((product) => {
+              // Map product names to emojis
+              const emoji = {
+                "Classic Soya": "🥛",
+                "Mango Soya": "🥭", 
+                "Choco Soya": "🍫",
+                "Strawberry Soya": "🍓",
+                "Ube Soya": "🍠",
+                "Coffee Soya": "☕",
+                "Banana Soya": "🍌"
+              }[product.name] || "🥛";
+
+              return (
+                <div key={product.id} className="rounded-3xl border border-border bg-gradient-card shadow-card p-6 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl">{emoji}</span>
+                    <div>
+                      <h4 className="font-semibold text-foreground">{product.name}</h4>
+                      <p className="text-sm text-muted-foreground">{currency.format(product.price)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-medium ${
+                      product.available ? "text-green-600" : "text-red-600"
+                    }`}>
+                      {product.available ? "Available" : "Unavailable"}
+                    </span>
+                    <StoreButton
+                      variant={product.available ? "outline" : "primary"}
+                      onClick={() => handleToggleAvailability(product.id, product.available)}
+                      icon={product.available ? EyeOff : Eye}
+                    >
+                      {product.available ? "Make Unavailable" : "Make Available"}
+                    </StoreButton>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${
-                    availability[product.id] !== false ? "text-green-600" : "text-red-600"
-                  }`}>
-                    {availability[product.id] !== false ? "Available" : "Unavailable"}
-                  </span>
-                  <StoreButton
-                    variant={availability[product.id] !== false ? "outline" : "primary"}
-                    onClick={() => handleToggleAvailability(product.id)}
-                    icon={availability[product.id] !== false ? EyeOff : Eye}
-                  >
-                    {availability[product.id] !== false ? "Make Unavailable" : "Make Available"}
-                  </StoreButton>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
