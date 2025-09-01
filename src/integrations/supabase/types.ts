@@ -79,6 +79,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          campus: string | null
+          contact: string | null
+          created_at: string | null
+          facebook: string | null
+          id: string
+          username: string
+        }
+        Insert: {
+          campus?: string | null
+          contact?: string | null
+          created_at?: string | null
+          facebook?: string | null
+          id: string
+          username: string
+        }
+        Update: {
+          campus?: string | null
+          contact?: string | null
+          created_at?: string | null
+          facebook?: string | null
+          id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -108,7 +135,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
