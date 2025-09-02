@@ -14,29 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          message: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          message: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          message?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string | null
+          delivery_fee: number | null
+          delivery_option: string | null
           id: string
           product_name: string
           quantity: number
           status: string | null
+          total_amount: number | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          delivery_fee?: number | null
+          delivery_option?: string | null
           id?: string
           product_name: string
           quantity: number
           status?: string | null
+          total_amount?: number | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          delivery_fee?: number | null
+          delivery_option?: string | null
           id?: string
           product_name?: string
           quantity?: number
           status?: string | null
+          total_amount?: number | null
           user_id?: string | null
         }
         Relationships: [

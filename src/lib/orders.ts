@@ -13,24 +13,36 @@ export interface Order {
   product_name: string;
   quantity: number;
   status: 'pending' | 'delivered';
+  delivery_option: 'pickup' | 'delivery';
+  delivery_fee: number;
+  total_amount: number;
   created_at: string;
-  total?: number;
 }
 
-export const createOrder = async (items: OrderItem[]) => {
+export const createOrder = async (items: OrderItem[], deliveryOption: 'pickup' | 'delivery' = 'pickup') => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
     throw new Error('User must be authenticated');
   }
 
+  // Calculate pricing - all products now cost 25, delivery adds 5
+  const basePrice = 25;
+  const deliveryFee = deliveryOption === 'delivery' ? 5 : 0;
+  
   // Create orders for each item
-  const orders = items.map(item => ({
-    user_id: user.id,
-    product_name: item.productName,
-    quantity: item.quantity,
-    status: 'pending' as const,
-  }));
+  const orders = items.map(item => {
+    const itemTotal = (basePrice + deliveryFee) * item.quantity;
+    return {
+      user_id: user.id,
+      product_name: item.productName,
+      quantity: item.quantity,
+      delivery_option: deliveryOption,
+      delivery_fee: deliveryFee,
+      total_amount: itemTotal,
+      status: 'pending' as const,
+    };
+  });
 
   const { data, error } = await supabase
     .from('orders')

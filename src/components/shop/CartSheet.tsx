@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useState } from "react";
 import { Trash2, CheckCircle2, X } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { currency } from "@/utils/currency";
 import { StoreButton } from "@/components/ui/store-button";
 
@@ -15,11 +17,17 @@ interface CartSheetProps {
   onClose: () => void;
   onRemove: (id: string) => void;
   onQtyChange: (id: string, qty: number) => void;
-  onCheckout: () => void;
+  onCheckout: (deliveryOption: 'pickup' | 'delivery') => void;
 }
 
 export function CartSheet({ items, onClose, onRemove, onQtyChange, onCheckout }: CartSheetProps) {
-  const total = useMemo(() => items.reduce((sum, it) => sum + it.price * it.qty, 0), [items]);
+  const [deliveryOption, setDeliveryOption] = useState<'pickup' | 'delivery'>('pickup');
+  
+  // All products are now 25, delivery adds 5
+  const basePrice = 25;
+  const deliveryFee = deliveryOption === 'delivery' ? 5 : 0;
+  const pricePerItem = basePrice + deliveryFee;
+  const total = items.reduce((sum, item) => sum + pricePerItem * item.qty, 0);
   
   return (
     <div className="fixed inset-0 z-50">
@@ -55,7 +63,7 @@ export function CartSheet({ items, onClose, onRemove, onQtyChange, onCheckout }:
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-semibold text-foreground">{item.name}</h4>
-                    <p className="text-sm text-muted-foreground">{currency.format(item.price)} each</p>
+                    <p className="text-sm text-muted-foreground">{currency.format(pricePerItem)} each</p>
                   </div>
                   <button 
                     onClick={() => onRemove(item.id)} 
@@ -78,7 +86,7 @@ export function CartSheet({ items, onClose, onRemove, onQtyChange, onCheckout }:
                     />
                   </div>
                   <p className="font-bold text-primary">
-                    {currency.format(item.price * item.qty)}
+                    {currency.format(pricePerItem * item.qty)}
                   </p>
                 </div>
               </div>
@@ -86,22 +94,50 @@ export function CartSheet({ items, onClose, onRemove, onQtyChange, onCheckout }:
           )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-border bg-gradient-card p-6 space-y-4">
-          <div className="flex items-center justify-between text-lg font-bold">
-            <span className="text-foreground">Total</span>
-            <span className="text-brand-gradient text-xl">{currency.format(total)}</span>
+        {/* Footer with delivery options */}
+        {items.length > 0 && (
+          <div className="border-t border-border bg-gradient-card p-6 space-y-4">
+            <div className="space-y-3">
+              <h3 className="font-medium">Delivery Option</h3>
+              <RadioGroup value={deliveryOption} onValueChange={(value) => setDeliveryOption(value as 'pickup' | 'delivery')}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pickup" id="pickup" />
+                  <Label htmlFor="pickup">Pickup - {currency.format(basePrice)} per item</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="delivery" id="delivery" />
+                  <Label htmlFor="delivery">Delivery - {currency.format(basePrice + 5)} per item (+{currency.format(5)} delivery fee)</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span>{currency.format(items.reduce((sum, item) => sum + basePrice * item.qty, 0))}</span>
+              </div>
+              {deliveryOption === 'delivery' && (
+                <div className="flex justify-between text-sm">
+                  <span>Delivery fee:</span>
+                  <span>{currency.format(deliveryFee * items.reduce((sum, item) => sum + item.qty, 0))}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-lg font-bold border-t pt-2">
+                <span>Total:</span>
+                <span className="text-brand-gradient text-xl">{currency.format(total)}</span>
+              </div>
+            </div>
+            
+            <StoreButton 
+              onClick={() => onCheckout(deliveryOption)} 
+              icon={CheckCircle2}
+              variant="hero"
+              className="w-full"
+            >
+              {deliveryOption === 'pickup' ? 'Place Order for Pickup' : 'Place Order for Delivery'}
+            </StoreButton>
           </div>
-          <StoreButton 
-            onClick={onCheckout} 
-            icon={CheckCircle2} 
-            disabled={items.length === 0}
-            variant="hero"
-            className="w-full"
-          >
-            Checkout Order
-          </StoreButton>
-        </div>
+        )}
       </div>
     </div>
   );

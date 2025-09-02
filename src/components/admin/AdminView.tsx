@@ -1,17 +1,20 @@
-import { useEffect, useState } from "react";
-import { CheckCircle2, Package, Clock, ArrowLeft, Settings, Eye, EyeOff } from "lucide-react";
-import { getAllOrders, updateOrderStatus, Order } from "@/lib/orders";
-import { getProducts, updateProductAvailability, Product } from "@/lib/products";
-import { currency } from "@/utils/currency";
-import { StoreButton } from "@/components/ui/store-button";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Package, Users, ShoppingCart, Megaphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getProducts, updateProductAvailability, Product } from "@/lib/products";
+import { getAllOrders, updateOrderStatus, Order } from "@/lib/orders";
+import { AnnouncementManager } from "./AnnouncementManager";
 
 interface AdminViewProps {
   onBack: () => void;
 }
 
 export function AdminView({ onBack }: AdminViewProps) {
-  const [activeTab, setActiveTab] = useState<"orders" | "products">("orders");
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,60 +43,15 @@ export function AdminView({ onBack }: AdminViewProps) {
     loadData();
   }, [toast]);
 
-  const todayOrders = orders.filter(order => {
-    const orderDate = new Date(order.created_at).toDateString();
-    const today = new Date().toDateString();
-    return orderDate === today;
-  });
-
-  const handleMarkDelivered = async (orderId: string) => {
+  const handleProductToggle = async (productId: string, available: boolean) => {
     try {
-      await updateOrderStatus(orderId, "delivered");
-      setOrders(prev => prev.map(order => 
-        order.id === orderId ? { ...order, status: "delivered" as const } : order
-      ));
-      toast({
-        title: "Order Updated",
-        description: "Order marked as delivered",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update order status",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleMarkPending = async (orderId: string) => {
-    try {
-      await updateOrderStatus(orderId, "pending");
-      setOrders(prev => prev.map(order => 
-        order.id === orderId ? { ...order, status: "pending" as const } : order
-      ));
-      toast({
-        title: "Order Updated",
-        description: "Order marked as pending",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update order status",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleToggleAvailability = async (productId: string, currentAvailability: boolean) => {
-    try {
-      const newAvailability = !currentAvailability;
-      await updateProductAvailability(productId, newAvailability);
+      await updateProductAvailability(productId, available);
       setProducts(prev => prev.map(product => 
-        product.id === productId ? { ...product, available: newAvailability } : product
+        product.id === productId ? { ...product, available } : product
       ));
       toast({
         title: "Product Updated",
-        description: `Product ${newAvailability ? 'enabled' : 'disabled'}`,
+        description: `Product ${available ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
       toast({
@@ -104,198 +62,157 @@ export function AdminView({ onBack }: AdminViewProps) {
     }
   };
 
+  const handleOrderStatusToggle = async (orderId: string, status: 'pending' | 'delivered') => {
+    try {
+      await updateOrderStatus(orderId, status);
+      setOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status } : order
+      ));
+      toast({
+        title: "Order Updated",
+        description: `Order marked as ${status}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8 text-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-muted-foreground">Loading admin dashboard...</p>
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading admin dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Package className="h-7 w-7 text-primary" />
-          <div>
-            <h2 className="text-2xl font-bold text-brand-gradient">Admin Dashboard</h2>
-            <p className="text-muted-foreground text-sm">Manage orders and product availability</p>
-          </div>
+    <div className="min-h-screen bg-gradient-hero p-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold text-brand-gradient">Admin Dashboard</h1>
         </div>
-        <StoreButton variant="secondary" onClick={onBack} icon={ArrowLeft}>
-          Logout
-        </StoreButton>
-      </div>
 
-      <div className="flex gap-4 mb-8">
-        <StoreButton 
-          variant={activeTab === "orders" ? "primary" : "outline"} 
-          onClick={() => setActiveTab("orders")}
-          icon={Package}
-        >
-          Orders Management
-        </StoreButton>
-        <StoreButton 
-          variant={activeTab === "products" ? "primary" : "outline"} 
-          onClick={() => setActiveTab("products")}
-          icon={Settings}
-        >
-          Product Availability
-        </StoreButton>
-      </div>
-      
-      <div className="grid gap-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-3xl border border-border bg-gradient-card shadow-soft p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <Package className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{todayOrders.length}</p>
-                <p className="text-sm text-muted-foreground">Today's Orders</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-3xl border border-border bg-gradient-card shadow-soft p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-100">
-                <Clock className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {todayOrders.filter(o => o.status === "pending").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Pending</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-3xl border border-border bg-gradient-card shadow-soft p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-green-100">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {todayOrders.filter(o => o.status === "delivered").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Delivered</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="announcements">Announcements</TabsTrigger>
+          </TabsList>
 
-      {activeTab === "orders" && (
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-foreground">Today's Orders</h3>
-          {todayOrders.length === 0 ? (
-            <div className="text-center py-16 bg-gradient-card rounded-3xl border border-border shadow-soft">
-              <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">No orders today</h3>
-              <p className="text-muted-foreground">Check back when customers start ordering!</p>
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{products.length}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{orders.length}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{orders.filter(o => o.status === 'pending').length}</div>
+                </CardContent>
+              </Card>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {todayOrders.map((order) => (
-                <div key={order.id} className="rounded-3xl border border-border bg-gradient-card shadow-card p-6 hover:shadow-glow transition-shadow duration-300">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <p className="font-semibold text-foreground">Order #{order.id.slice(0, 8)}</p>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          order.status === "delivered" 
-                            ? "bg-green-100 text-green-700 border border-green-200"
-                            : "bg-amber-100 text-amber-700 border border-amber-200"
-                        }`}>
-                          {order.status === "delivered" ? "Delivered" : "Pending"}
-                        </span>
+          </TabsContent>
+
+          <TabsContent value="products">
+            <Card>
+              <CardHeader>
+                <CardTitle>Products Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {products.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{product.name}</h3>
+                        <p className="text-sm text-muted-foreground">₱{product.price}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {new Date(order.created_at).toLocaleString('en-PH', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
-                      </p>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p><span className="font-medium">Product:</span> {order.product_name}</p>
-                        <p><span className="font-medium">Quantity:</span> {order.quantity}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={product.available ? "default" : "secondary"}>
+                          {product.available ? "Available" : "Unavailable"}
+                        </Badge>
+                        <Switch
+                          checked={product.available}
+                          onCheckedChange={(checked) => handleProductToggle(product.id, checked)}
+                        />
                       </div>
                     </div>
-                    <div className="text-right">
-                      {order.status === "pending" ? (
-                        <StoreButton 
-                          variant="success" 
-                          onClick={() => handleMarkDelivered(order.id)}
-                          icon={CheckCircle2}
-                        >
-                          Mark Delivered
-                        </StoreButton>
-                      ) : (
-                        <StoreButton 
-                          variant="outline" 
-                          onClick={() => handleMarkPending(order.id)}
-                          icon={Clock}
-                        >
-                          Mark Pending
-                        </StoreButton>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {activeTab === "products" && (
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-foreground">Product Availability</h3>
-          <div className="grid gap-4">
-            {products.map((product) => {
-              // Map product names to emojis
-              const emoji = {
-                "Classic Soya": "🥛",
-                "Mango Soya": "🥭", 
-                "Choco Soya": "🍫",
-                "Strawberry Soya": "🍓",
-                "Ube Soya": "🍠",
-                "Coffee Soya": "☕",
-                "Banana Soya": "🍌"
-              }[product.name] || "🥛";
-
-              return (
-                <div key={product.id} className="rounded-3xl border border-border bg-gradient-card shadow-card p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">{emoji}</span>
-                    <div>
-                      <h4 className="font-semibold text-foreground">{product.name}</h4>
-                      <p className="text-sm text-muted-foreground">{currency.format(product.price)}</p>
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Orders Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{order.product_name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Qty: {order.quantity} | {order.delivery_option} | ₱{order.total_amount}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={order.status === 'pending' ? "destructive" : "default"}>
+                          {order.status}
+                        </Badge>
+                        <Switch
+                          checked={order.status === 'delivered'}
+                          onCheckedChange={(checked) => handleOrderStatusToggle(order.id, checked ? 'delivered' : 'pending')}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-sm font-medium ${
-                      product.available ? "text-green-600" : "text-red-600"
-                    }`}>
-                      {product.available ? "Available" : "Unavailable"}
-                    </span>
-                    <StoreButton
-                      variant={product.available ? "outline" : "primary"}
-                      onClick={() => handleToggleAvailability(product.id, product.available)}
-                      icon={product.available ? EyeOff : Eye}
-                    >
-                      {product.available ? "Make Unavailable" : "Make Available"}
-                    </StoreButton>
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="announcements">
+            <AnnouncementManager />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

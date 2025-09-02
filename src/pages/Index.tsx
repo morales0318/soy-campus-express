@@ -10,6 +10,7 @@ import { currency } from "@/utils/currency";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { CartSheet } from "@/components/shop/CartSheet";
 import { OrdersView } from "@/components/shop/OrdersView";
@@ -120,7 +121,7 @@ const Index = () => {
     navigate('/auth');
   }
 
-  async function handleCheckout() {
+  async function handleCheckout(deliveryOption: 'pickup' | 'delivery') {
     if (!user) return;
     
     try {
@@ -128,15 +129,15 @@ const Index = () => {
         productId: item.id,
         productName: item.name,
         quantity: item.qty,
-        price: item.price
+        price: 25 // All products are now 25
       }));
 
-      await createOrder(orderItems);
+      await createOrder(orderItems, deliveryOption);
       setCart([]);
       setCartOpen(false);
       toast({
         title: "Order Placed Successfully! 🎉",
-        description: "Check your orders to track delivery.",
+        description: `Your order for ${deliveryOption} has been placed. Check your orders to track status.`,
       });
     } catch (error) {
       toast({
@@ -179,6 +180,8 @@ const Index = () => {
         onShowOrders={() => setView("orders")}
         onShowAdmin={() => setView("admin")}
       />
+      
+      <AnnouncementBanner />
 
       {banner && (
         <div className="mx-auto max-w-5xl px-3 sm:px-4 pt-4 sm:pt-6">

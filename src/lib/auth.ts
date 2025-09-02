@@ -68,7 +68,7 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
   if (!user) return null;
 
   // Check if admin
-  const isAdmin = user.email === 'admin@admin.com';
+  const isAdmin = user.email === 'dionalshayn18@gmail.com';
 
   // Get profile data
   const { data: profile } = await supabase
