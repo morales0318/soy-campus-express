@@ -163,8 +163,14 @@ const Index = () => {
     return null; // Auth redirect will handle this
   }
 
-  // Redirect regular users away from admin if they somehow get there
-  if (view === "admin" && !user.isAdmin) {
+  // Import admin auth functions
+  const { isAdminLoggedIn } = require("@/lib/admin-auth");
+  
+  // Allow admin access for email admin or admin login session
+  const canAccessAdmin = user?.isAdmin || isAdminLoggedIn();
+  
+  // Redirect non-admin users away from admin view
+  if (view === "admin" && !canAccessAdmin) {
     setView("shop");
   }
 
@@ -179,6 +185,7 @@ const Index = () => {
         onCartClick={() => setCartOpen(true)}
         onShowOrders={() => setView("orders")}
         onShowAdmin={() => setView("admin")}
+        onAdminLogin={() => setView("admin")}
       />
       
       <AnnouncementBanner />
@@ -243,8 +250,8 @@ const Index = () => {
         </main>
       )}
 
-       {user.isAdmin && (
-         <AdminView onBack={handleLogout} />
+       {view === "admin" && canAccessAdmin && (
+         <AdminView onBack={() => setView("shop")} />
        )}
 
        {view === "orders" && !user.isAdmin && (

@@ -1,6 +1,8 @@
 import { ShoppingCart, LogOut, UserCircle2, ClipboardList, Shield } from "lucide-react";
 import { AuthUser } from "@/lib/auth";
 import { StoreButton } from "@/components/ui/store-button";
+import { AdminLoginDialog } from "@/components/admin/AdminLoginDialog";
+import { adminLogout, isAdminLoggedIn } from "@/lib/admin-auth";
 
 interface NavbarProps {
   user: AuthUser | null;
@@ -9,9 +11,20 @@ interface NavbarProps {
   onCartClick: () => void;
   onShowOrders: () => void;
   onShowAdmin: () => void;
+  onAdminLogin: () => void;
 }
 
-export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, onShowAdmin }: NavbarProps) {
+export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, onShowAdmin, onAdminLogin }: NavbarProps) {
+  const handleAdminAccess = () => {
+    if (isAdminLoggedIn() || user?.isAdmin) {
+      onShowAdmin();
+    }
+  };
+
+  const handleLogout = () => {
+    adminLogout(); // Clear admin session
+    onLogout(); // Regular logout
+  };
   return (
     <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border shadow-soft">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
@@ -84,11 +97,12 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
               </>
             )}
             
-            {user.isAdmin && (
+            {/* Admin access - show for email admin or admin session */}
+            {(user?.isAdmin || isAdminLoggedIn()) ? (
               <>
                 <StoreButton 
                   variant="ghost" 
-                  onClick={onShowAdmin} 
+                  onClick={handleAdminAccess} 
                   icon={Shield}
                   className="hidden sm:flex"
                 >
@@ -96,13 +110,15 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
                 </StoreButton>
                 <StoreButton 
                   variant="ghost" 
-                  onClick={onShowAdmin}
+                  onClick={handleAdminAccess}
                   className="sm:hidden p-2"
                   iconOnly
                 >
                   <Shield className="h-5 w-5" />
                 </StoreButton>
               </>
+            ) : (
+              <AdminLoginDialog onAdminLogin={onAdminLogin} />
             )}
             
             <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 ml-2 sm:ml-3 border-l border-border">
@@ -112,7 +128,7 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
             
             <StoreButton 
               variant="ghost" 
-              onClick={onLogout} 
+              onClick={handleLogout} 
               icon={LogOut}
               className="hidden sm:flex"
             >
@@ -122,7 +138,7 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
             {/* Mobile: Logout icon only */}
             <StoreButton 
               variant="ghost" 
-              onClick={onLogout}
+              onClick={handleLogout}
               className="sm:hidden p-2"
               iconOnly
             >

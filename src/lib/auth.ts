@@ -67,8 +67,10 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
   
   if (!user) return null;
 
-  // Check if admin
-  const isAdmin = user.email === 'dionalshayn18@gmail.com';
+  // Check if admin (email-based or admin session)
+  const isEmailAdmin = user.email === 'dionalshayn18@gmail.com';
+  const isSessionAdmin = localStorage.getItem('admin_session') === 'true';
+  const isAdmin = isEmailAdmin || isSessionAdmin;
 
   // Get profile data
   const { data: profile } = await supabase
