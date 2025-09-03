@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Package, Users, ShoppingCart, Megaphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getProducts, updateProductAvailability, Product } from "@/lib/products";
+import { getProducts, Product } from "@/lib/products";
 import { getAllOrders, updateOrderStatus, Order } from "@/lib/orders";
+import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementManager } from "./AnnouncementManager";
 
 interface AdminViewProps {
@@ -45,7 +46,13 @@ export function AdminView({ onBack }: AdminViewProps) {
 
   const handleProductToggle = async (productId: string, available: boolean) => {
     try {
-      await updateProductAvailability(productId, available);
+      const { error } = await supabase
+        .from('products')
+        .update({ available })
+        .eq('id', productId);
+
+      if (error) throw error;
+
       setProducts(prev => prev.map(product => 
         product.id === productId ? { ...product, available } : product
       ));
@@ -56,7 +63,7 @@ export function AdminView({ onBack }: AdminViewProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update product availability",
+        description: "Failed to update product",
         variant: "destructive",
       });
     }

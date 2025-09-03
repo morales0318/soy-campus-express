@@ -221,15 +221,6 @@ export default function Auth() {
             </Button>
           </div>
 
-          {mode === 'login' && (
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Admin Login:</strong><br />
-                Email: admin@admin.com<br />
-                Password: admin123
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
