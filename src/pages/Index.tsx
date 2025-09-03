@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser, signOut, AuthUser } from "@/lib/auth";
 import { getProducts, updateProductAvailability, Product } from "@/lib/products";
 import { createOrder, getUserOrders, getAllOrders, updateOrderStatus, Order, OrderItem } from "@/lib/orders";
+import { isAdminLoggedIn } from "@/lib/admin-auth";
 import { currency } from "@/utils/currency";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/layout/Navbar";
@@ -163,9 +164,6 @@ const Index = () => {
     return null; // Auth redirect will handle this
   }
 
-  // Import admin auth functions
-  const { isAdminLoggedIn } = require("@/lib/admin-auth");
-  
   // Allow admin access for email admin or admin login session
   const canAccessAdmin = user?.isAdmin || isAdminLoggedIn();
   
