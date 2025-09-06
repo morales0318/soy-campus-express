@@ -37,46 +37,66 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (!mounted) return;
+        
         setSession(session);
         if (session?.user) {
-          const authUser = await getCurrentUser();
-          setUser(authUser);
-          setLoading(false);
+          try {
+            const authUser = await getCurrentUser();
+            setUser(authUser);
+          } catch (error) {
+            console.error('Error getting user:', error);
+            setUser(null);
+          }
         } else {
           setUser(null);
-          setLoading(false);
-          navigate('/auth');
         }
+        setLoading(false);
       }
     );
 
     // Check for existing session
     const checkSession = async () => {
       try {
+        console.log('Checking existing session...');
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Existing session:', session?.user?.email);
+        
+        if (!mounted) return;
+        
         setSession(session);
         if (session?.user) {
           const authUser = await getCurrentUser();
           setUser(authUser);
         } else {
           setUser(null);
-          navigate('/auth');
         }
       } catch (error) {
         console.error('Session check failed:', error);
-        navigate('/auth');
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     checkSession();
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -157,6 +177,14 @@ const Index = () => {
     }
   }
 
+  // Handle redirect to auth page
+  useEffect(() => {
+    if (!loading && !user) {
+      console.log('No user found, redirecting to auth...');
+      navigate('/auth');
+    }
+  }, [loading, user, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
@@ -168,9 +196,8 @@ const Index = () => {
     );
   }
 
-  // Redirect to auth if no user
+  // Don't render main content if no user
   if (!user) {
-    navigate('/auth');
     return null;
   }
 
