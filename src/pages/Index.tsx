@@ -44,25 +44,33 @@ const Index = () => {
         if (session?.user) {
           const authUser = await getCurrentUser();
           setUser(authUser);
+          setLoading(false);
         } else {
           setUser(null);
+          setLoading(false);
           navigate('/auth');
         }
-        setLoading(false);
       }
     );
 
     // Check for existing session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const authUser = await getCurrentUser();
-        setUser(authUser);
-      } else {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        if (session?.user) {
+          const authUser = await getCurrentUser();
+          setUser(authUser);
+        } else {
+          setUser(null);
+          navigate('/auth');
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
         navigate('/auth');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkSession();
@@ -158,6 +166,12 @@ const Index = () => {
         </div>
       </div>
     );
+  }
+
+  // Redirect to auth if no user
+  if (!user) {
+    navigate('/auth');
+    return null;
   }
 
   if (!user) {
