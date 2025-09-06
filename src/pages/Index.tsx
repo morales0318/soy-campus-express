@@ -37,24 +37,13 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    let mounted = true;
-    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (!mounted) return;
-        
         setSession(session);
         if (session?.user) {
-          try {
-            const authUser = await getCurrentUser();
-            setUser(authUser);
-          } catch (error) {
-            console.error('Error getting user:', error);
-            setUser(null);
-          }
+          const authUser = await getCurrentUser();
+          setUser(authUser);
         } else {
           setUser(null);
         }
@@ -64,38 +53,20 @@ const Index = () => {
 
     // Check for existing session
     const checkSession = async () => {
-      try {
-        console.log('Checking existing session...');
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Existing session:', session?.user?.email);
-        
-        if (!mounted) return;
-        
-        setSession(session);
-        if (session?.user) {
-          const authUser = await getCurrentUser();
-          setUser(authUser);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-        if (mounted) {
-          setUser(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      if (session?.user) {
+        const authUser = await getCurrentUser();
+        setUser(authUser);
+      } else {
+        setUser(null);
       }
+      setLoading(false);
     };
 
     checkSession();
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -177,14 +148,6 @@ const Index = () => {
     }
   }
 
-  // Handle redirect to auth page
-  useEffect(() => {
-    if (!loading && !user) {
-      console.log('No user found, redirecting to auth...');
-      navigate('/auth');
-    }
-  }, [loading, user, navigate]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
@@ -196,8 +159,8 @@ const Index = () => {
     );
   }
 
-  // Don't render main content if no user
   if (!user) {
+    navigate('/auth');
     return null;
   }
 

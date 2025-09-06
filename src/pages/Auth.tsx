@@ -23,16 +23,9 @@ export default function Auth() {
 
   useEffect(() => {
     const checkUser = async () => {
-      try {
-        console.log('Auth page: checking current user...');
-        const user = await getCurrentUser();
-        console.log('Auth page: current user:', user?.email);
-        if (user) {
-          console.log('Auth page: user found, redirecting to home...');
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Auth page: error checking user:', error);
+      const user = await getCurrentUser();
+      if (user) {
+        navigate('/');
       }
     };
     checkUser();
