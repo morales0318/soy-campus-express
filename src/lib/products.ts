@@ -22,3 +22,15 @@ export const getProducts = async (): Promise<Product[]> => {
 
   return data || [];
 };
+
+export const updateProductAvailability = async (productId: string, available: boolean) => {
+  const { error } = await supabase
+    .from('products')
+    .update({ available })
+    .eq('id', productId);
+
+  if (error) {
+    console.error('Error updating product availability:', error);
+    throw error;
+  }
+};

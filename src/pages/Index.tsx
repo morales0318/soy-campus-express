@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Phone, Facebook } from "lucide-react";
-import { Session } from "@supabase/supabase-js";
+import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser, signOut, AuthUser } from "@/lib/auth";
+import { getProducts, updateProductAvailability, Product } from "@/lib/products";
 import { createOrder, getUserOrders, getAllOrders, updateOrderStatus, Order, OrderItem } from "@/lib/orders";
-import { getProducts, Product } from "@/lib/products";
-import { isAdminLoggedIn } from "@/lib/admin-auth";
 import { currency } from "@/utils/currency";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/layout/Navbar";
@@ -46,6 +45,7 @@ const Index = () => {
           setUser(authUser);
         } else {
           setUser(null);
+          navigate('/auth');
         }
         setLoading(false);
       }
@@ -59,7 +59,7 @@ const Index = () => {
         const authUser = await getCurrentUser();
         setUser(authUser);
       } else {
-        setUser(null);
+        navigate('/auth');
       }
       setLoading(false);
     };
@@ -67,7 +67,7 @@ const Index = () => {
     checkSession();
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -160,14 +160,12 @@ const Index = () => {
   }
 
   if (!user) {
-    navigate('/auth');
-    return null;
-  }
-
-  if (!user) {
     return null; // Auth redirect will handle this
   }
 
+  // Import admin auth functions
+  const { isAdminLoggedIn } = require("@/lib/admin-auth");
+  
   // Allow admin access for email admin or admin login session
   const canAccessAdmin = user?.isAdmin || isAdminLoggedIn();
   
