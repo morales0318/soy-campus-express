@@ -204,7 +204,7 @@ const Index = () => {
                 Choose Your Flavor
               </h2>
               <p className="text-muted-foreground text-base sm:text-lg mb-4">
-                Classic soy milk for {currency.format(20)}. Premium flavors for {currency.format(25)}.
+                All flavors available for {currency.format(25)}.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-6 text-sm text-muted-foreground">
                  {user.campus && (
