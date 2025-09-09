@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Trash2, Edit2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isAdminLoggedIn } from "@/lib/admin-auth";
 import { 
   getAllAnnouncements, 
   createAnnouncement, 
@@ -22,6 +23,15 @@ export function AnnouncementManager() {
   const [newMessage, setNewMessage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+
+  // Check if user has admin access
+  if (!isAdminLoggedIn()) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">Access denied. Admin login required.</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadAnnouncements();
