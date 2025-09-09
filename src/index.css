@@ -171,6 +171,18 @@
       min-width: 44px;
     }
     
+    /* Ensure icons are visible */
+    nav button[data-icon-only="true"] {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Ensure navbar icons have proper contrast */
+    nav svg {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    }
+    
     /* Prevent zoom on input focus */
     input[type="text"], 
     input[type="email"], 
@@ -194,6 +206,16 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+    }
+    
+    /* Mobile-specific spacing */
+    .navbar-mobile-icon {
+      padding: 12px !important;
+      min-width: 48px !important;
+      min-height: 48px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
   }
 }

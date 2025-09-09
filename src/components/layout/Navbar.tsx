@@ -26,8 +26,8 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
     onLogout(); // Regular logout
   };
   return (
-    <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-border shadow-soft">
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border shadow-soft">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-2xl sm:text-3xl">🥛</span>
@@ -45,6 +45,7 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
           <div className="flex items-center gap-1 sm:gap-3">
             {!user.isAdmin && (
               <>
+                {/* Desktop: Full buttons */}
                 <StoreButton 
                   variant="ghost" 
                   onClick={onShowOrders} 
@@ -54,16 +55,17 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
                   Orders
                 </StoreButton>
                 
-                {/* Mobile: Orders icon only */}
+                {/* Mobile: Orders icon only - with better visibility */}
                 <StoreButton 
                   variant="ghost" 
                   onClick={onShowOrders}
-                  className="sm:hidden p-2"
+                  className="sm:hidden p-3 min-w-[44px] min-h-[44px] bg-accent/50 border border-border"
                   iconOnly
                 >
                   <ClipboardList className="h-5 w-5" />
                 </StoreButton>
                 
+                {/* Desktop: Cart with text */}
                 <StoreButton 
                   variant="secondary" 
                   onClick={onCartClick} 
@@ -78,18 +80,18 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
                   )}
                 </StoreButton>
                 
-                {/* Mobile: Cart with badge */}
+                {/* Mobile: Cart with badge - enhanced visibility */}
                 <div className="relative sm:hidden">
                   <StoreButton 
                     variant="secondary" 
                     onClick={onCartClick}
-                    className="p-2"
+                    className="p-3 min-w-[44px] min-h-[44px] bg-secondary border border-border"
                     iconOnly
                   >
                     <ShoppingCart className="h-5 w-5" />
                   </StoreButton>
                   {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs w-5 h-5 font-bold">
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs w-6 h-6 font-bold shadow-card border-2 border-background">
                       {cartCount}
                     </span>
                   )}
@@ -97,9 +99,10 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
               </>
             )}
             
-            {/* Admin access - show for email admin or admin session */}
+            {/* Admin access - enhanced mobile visibility */}
             {(user?.isAdmin || isAdminLoggedIn()) ? (
               <>
+                {/* Desktop: Admin Dashboard */}
                 <StoreButton 
                   variant="ghost" 
                   onClick={handleAdminAccess} 
@@ -108,24 +111,28 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
                 >
                   Dashboard
                 </StoreButton>
+                
+                {/* Mobile: Admin icon with background */}
                 <StoreButton 
                   variant="ghost" 
                   onClick={handleAdminAccess}
-                  className="sm:hidden p-2"
+                  className="sm:hidden p-3 min-w-[44px] min-h-[44px] bg-accent/50 border border-border"
                   iconOnly
                 >
-                  <Shield className="h-5 w-5" />
+                  <Shield className="h-5 w-5 text-primary" />
                 </StoreButton>
               </>
             ) : (
               <AdminLoginDialog onAdminLogin={onAdminLogin} />
             )}
             
+            {/* User info with better mobile spacing */}
             <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 ml-2 sm:ml-3 border-l border-border">
               <UserCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="text-xs sm:text-sm text-foreground font-medium hidden sm:block">{user.username}</span>
             </div>
             
+            {/* Desktop: Logout with text */}
             <StoreButton 
               variant="ghost" 
               onClick={handleLogout} 
@@ -135,18 +142,18 @@ export function Navbar({ user, onLogout, cartCount, onCartClick, onShowOrders, o
               Logout
             </StoreButton>
             
-            {/* Mobile: Logout icon only */}
+            {/* Mobile: Logout icon with background */}
             <StoreButton 
               variant="ghost" 
               onClick={handleLogout}
-              className="sm:hidden p-2"
+              className="sm:hidden p-3 min-w-[44px] min-h-[44px] bg-destructive/10 border border-destructive/20"
               iconOnly
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-5 w-5 text-destructive" />
             </StoreButton>
           </div>
         )}
       </div>
-    </div>
+    </nav>
   );
 }
