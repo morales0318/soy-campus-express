@@ -40,29 +40,84 @@ const Index = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        if (session?.user) {
-          const authUser = await getCurrentUser();
-          setUser(authUser);
-        } else {
+        console.log('Auth state change:', event, session?.user?.id);
+        
+        // Handle auth errors and invalid sessions
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('Token refresh failed, clearing session');
+          // Clear any stored auth data
+          localStorage.removeItem('admin_session');
+          localStorage.removeItem('admin_username');
+          setSession(null);
           setUser(null);
           navigate('/auth');
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+        if (session?.user) {
+          try {
+            const authUser = await getCurrentUser();
+            setUser(authUser);
+          } catch (error) {
+            console.error('Error getting current user:', error);
+            // If we can't get user data, treat as logged out
+            setSession(null);
+            setUser(null);
+            navigate('/auth');
+          }
+        } else {
+          setUser(null);
+          if (event !== 'INITIAL_SESSION') {
+            navigate('/auth');
+          }
         }
         setLoading(false);
       }
     );
 
-    // Check for existing session
+    // Check for existing session with error handling
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        const authUser = await getCurrentUser();
-        setUser(authUser);
-      } else {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session check error:', error);
+          // Clear invalid session data
+          localStorage.removeItem('admin_session');
+          localStorage.removeItem('admin_username');
+          setSession(null);
+          setUser(null);
+          navigate('/auth');
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+        if (session?.user) {
+          try {
+            const authUser = await getCurrentUser();
+            setUser(authUser);
+          } catch (userError) {
+            console.error('Error getting user:', userError);
+            setSession(null);
+            setUser(null);
+            navigate('/auth');
+          }
+        } else {
+          navigate('/auth');
+        }
+      } catch (error) {
+        console.error('Critical session error:', error);
+        // Force clear everything and redirect
+        localStorage.clear();
+        setSession(null);
+        setUser(null);
         navigate('/auth');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkSession();
